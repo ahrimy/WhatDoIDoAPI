@@ -1,4 +1,6 @@
 const axios = require("axios");
+const NaturalLanguageUnderstandingV1 = require("ibm-watson/natural-language-understanding/v1");
+const { IamAuthenticator } = require("ibm-watson/auth");
 
 const AWS = require("aws-sdk");
 
@@ -13,6 +15,14 @@ const options = {
     "X-NCP-APIGW-API-KEY": TRANSLATE_API_CLIENT_SECRET,
   },
 };
+
+const naturalLanguageUnderstanding = new NaturalLanguageUnderstandingV1({
+  version: "2020-08-01",
+  authenticator: new IamAuthenticator({
+    apikey: process.env.SENTIMENT_API_KEY,
+  }),
+  serviceUrl: process.env.SENTIMENT_API_URL,
+});
 
 exports.handler = async (event, context, callback) => {
   // 사용자가 입력한 문장
@@ -29,6 +39,25 @@ exports.handler = async (event, context, callback) => {
   console.log("영어: " + sentence);
 
   //TODO: 감정분석
+  const analyzeParams = {
+    text: sentence,
+    features: {
+      emotion: {
+        document: true,
+      },
+    },
+  };
+
+  const sentimentResult = await naturalLanguageUnderstanding
+    .analyze(analyzeParams)
+    .then((analysisResults) => {
+      return analysisResults.result;
+    })
+    .catch((err) => {
+      console.log("error:", err);
+    });
+
+  console.log(sentimentResult.emotion.document.emotion);
 
   //TODO: DB 조회
 
