@@ -25,48 +25,111 @@ const naturalLanguageUnderstanding = new NaturalLanguageUnderstandingV1({
 });
 
 exports.handler = async (event, context, callback) => {
-  // 사용자가 입력한 문장
-  const query = JSON.parse(event.body).sentence;
-  console.log("한글: " + query);
+  try {
+    // 사용자가 입력한 문장
+    const query = JSON.parse(event.body).sentence;
+    console.log("한글: " + query);
 
-  //번역
-  const translateResult = await axios
-    .post(API_URL, { source: "ko", target: "en", text: query }, options)
-    .catch((err) => {
-      errorResponse(err.message, context.awsRequestId, callback);
-    });
-  const sentence = translateResult.data.message.result.translatedText;
-  console.log("영어: " + sentence);
+    //번역
+    const translateResult = await axios
+      .post(API_URL, { source: "ko", target: "en", text: query }, options)
+      .catch((err) => {
+        errorResponse(err.message, context.awsRequestId, callback);
+      });
+    const sentence = translateResult.data.message.result.translatedText;
+    console.log("영어: " + sentence);
 
-  //TODO: 감정분석
-  const analyzeParams = {
-    text: sentence,
-    features: {
-      emotion: {
-        document: true,
+    //TODO: 감정분석
+    const analyzeParams = {
+      text: sentence,
+      features: {
+        emotion: {
+          document: true,
+        },
       },
-    },
-  };
+    };
 
-  const sentimentResult = await naturalLanguageUnderstanding
-    .analyze(analyzeParams)
-    .then((analysisResults) => {
-      return analysisResults.result;
-    })
-    .catch((err) => {
-      console.log("error:", err);
+    const sentimentResult = await naturalLanguageUnderstanding
+      .analyze(analyzeParams)
+      .then((analysisResults) => {
+        return analysisResults.result;
+      });
+
+    console.log(sentimentResult.emotion.document.emotion);
+
+    const {
+      sadness,
+      joy,
+      fear,
+      disgust,
+      anger,
+    } = sentimentResult.emotion.document.emotion;
+    const emotions = [
+      {
+        type: "sadness",
+        score: sadness,
+      },
+      {
+        type: "joy",
+        score: joy,
+      },
+      {
+        type: "fear",
+        score: fear,
+      },
+      {
+        type: "disgust",
+        score: disgust,
+      },
+      {
+        type: "anger",
+        score: anger,
+      },
+    ];
+
+    emotions.sort(function (a, b) {
+      return b.score - a.score;
     });
 
-  console.log(sentimentResult.emotion.document.emotion);
+    //DB 조회
 
-  //TODO: DB 조회
+    const userEmotion = [emotions[0].type];
+    const sentences = [];
+    let result = await getSentence(userEmotion[0]);
+    let itemList = result.Items;
+    let index = 0;
+    if (emotions[0].score > 0.8) {
+      for (let i = 0; i < 4; i++) {
+        index = Math.floor(Math.random() * itemList.length);
+        sentences.push(itemList.splice(index, 1));
+      }
+    } else {
+      userEmotion.push(emotions[1].type);
+      for (let i = 0; i < 2; i++) {
+        index = Math.floor(Math.random() * itemList.length);
+        sentences.push(itemList.splice(index, 1));
+      }
+      result = await getSentence(
+        userEmotion[1],
+        sentences[0].SentenceId,
+        sentences[1].SentenceId
+      );
+      itemList = result.Items;
+      for (let i = 0; i < 2; i++) {
+        index = Math.floor(Math.random() * itemList.length);
+        sentences.push(itemList.splice(index, 1));
+      }
+    }
 
-  const response = {
-    statusCode: 200,
-    body: sentence,
-  };
+    const response = {
+      statusCode: 200,
+      body: { emotion: userEmotion, sentences },
+    };
 
-  return response;
+    return response;
+  } catch (err) {
+    errorResponse(err.message, context.awsRequestId, callback);
+  }
 };
 
 function errorResponse(errorMessage, awsRequestId, callback) {
@@ -80,4 +143,43 @@ function errorResponse(errorMessage, awsRequestId, callback) {
       "Access-Control-Allow-Origin": "*",
     },
   });
+}
+
+async function getSentence(type, id1, id2) {
+  const params = {
+    // Specify which items in the results are returned.
+    FilterExpression: id1
+      ? "#contentType = :contentType AND not (Content in (:id1, :id2))"
+      : "#contentType = :contentType",
+    // Define the expression attribute value, which are substitutes for the values you want to compare.
+    ExpressionAttributeValues: id1
+      ? {
+          ":contentType": type,
+          ":id1": id1,
+          ":id2": id2,
+        }
+      : {
+          ":contentType": type,
+        },
+    // Set the projection expression, which the the attributes that you want.
+    ExpressionAttributeNames: {
+      "#contentType": "Type",
+    },
+    ProjectionExpression: "SentenceId, Content",
+    TableName: "Sentences",
+  };
+
+  const sentence = ddb
+    .scan(params, function (err, data) {
+      if (err) {
+        console.error(
+          "Unable to read item. Error JSON:",
+          JSON.stringify(err, null, 2)
+        );
+      }
+      return data;
+    })
+    .promise();
+
+  return sentence;
 }
