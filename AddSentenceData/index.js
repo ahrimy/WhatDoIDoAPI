@@ -9,22 +9,24 @@ exports.handler = async (event, context, callback) => {
   console.log("입력데이터: " + requestBody);
 
   // sentence ID 생성
-  const sentenceId = toUrlString(randomBytes(16));
+  // const sentenceId = toUrlString(randomBytes(16));
 
+  const type = requestBody.type;
   // 중복 문장 조회
-  const sentence = await getSentence(requestBody.content.kr);
+  const sentence = await getSentence(requestBody.content);
 
-  let content = {};
+  let sentenceId;
+  let content;
   if (sentence.Items.length == 0) {
-    content.ContentId = toUrlString(randomBytes(8));
-    content.ContentKr = requestBody.content.kr;
-    content.ContentEn = requestBody.content.en;
+    sentenceId = toUrlString(randomBytes(16));
+    content = requestBody.content;
   } else {
+    sentenceId = sentence.Items[0].SentenceId;
     content = sentence.Items[0].Content;
   }
 
   // sentence 데이터 생성
-  const result = await recordSentence(sentenceId, content, requestBody);
+  const result = await recordSentence(type, sentenceId, content);
 
   const response = {
     statusCode: 200,
@@ -45,14 +47,13 @@ function toUrlString(buffer) {
 async function getSentence(content) {
   const params = {
     // Specify which items in the results are returned.
-    FilterExpression: "Content.ContentKr = :content",
+    FilterExpression: "Content = :content",
     // Define the expression attribute value, which are substitutes for the values you want to compare.
     ExpressionAttributeValues: {
       ":content": content,
     },
     // Set the projection expression, which the the attributes that you want.
-    ProjectionExpression:
-      "Content.ContentId, Content.ContentKr, Content.ContentEn",
+    ProjectionExpression: "SentenceId, Content",
     TableName: "Sentences",
   };
 
@@ -71,16 +72,14 @@ async function getSentence(content) {
   return sentence;
 }
 
-async function recordSentence(sentenceId, content, requestBody) {
+async function recordSentence(type, sentenceId, content) {
   return await ddb
     .put({
       TableName: "Sentences",
       Item: {
+        Type: type,
         SentenceId: sentenceId,
-        Category: requestBody.category,
         Content: content,
-        Frequency: 0,
-        Meaning: requestBody.meaning,
         RequestTime: new Date().toISOString(),
       },
     })
