@@ -27,8 +27,8 @@ const naturalLanguageUnderstanding = new NaturalLanguageUnderstandingV1({
 exports.handler = async (event, context, callback) => {
   try {
     // 사용자가 입력한 문장
-    const query = JSON.parse(event.body).sentence;
-    console.log("한글: " + query);
+    const query = event.sentence;
+    // console.log("한글: " + query);
 
     //번역
     const translateResult = await axios
@@ -37,7 +37,7 @@ exports.handler = async (event, context, callback) => {
         errorResponse(err.message, context.awsRequestId, callback);
       });
     const sentence = translateResult.data.message.result.translatedText;
-    console.log("영어: " + sentence);
+    // console.log("영어: " + sentence);
 
     //TODO: 감정분석
     const analyzeParams = {
@@ -55,7 +55,7 @@ exports.handler = async (event, context, callback) => {
         return analysisResults.result;
       });
 
-    console.log(sentimentResult.emotion.document.emotion);
+    // console.log(sentimentResult.emotion.document.emotion);
 
     const {
       sadness,
@@ -165,7 +165,7 @@ async function getSentence(type, id1, id2) {
     ExpressionAttributeNames: {
       "#contentType": "Type",
     },
-    ProjectionExpression: "SentenceId, Content",
+    ProjectionExpression: "SentenceId, Content, #contentType",
     TableName: "Sentences",
   };
 
