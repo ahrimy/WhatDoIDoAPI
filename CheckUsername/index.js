@@ -1,11 +1,8 @@
-const randomBytes = require("crypto").randomBytes;
-
 const AWS = require("aws-sdk");
 
 const ddb = new AWS.DynamoDB.DocumentClient();
 
 exports.handler = async (event, context, callback) => {
-  console.log(event);
   const { username } = event;
 
   try {
@@ -20,19 +17,9 @@ exports.handler = async (event, context, callback) => {
       };
     }
 
-    // userId 생성
-    const userId = toUrlString(randomBytes(16));
-
-    const payload = {
-      UserId: userId,
-      Username: username,
-    };
-    
-    await recordUser(payload);
-
     const response = {
       statusCode: 200,
-      body: { message: `${username}은 사용가능한 아이디입니다.` , userId},
+      body: { message: `${username}은 사용가능한 아이디입니다.` },
     };
 
     return response;
@@ -42,11 +29,7 @@ exports.handler = async (event, context, callback) => {
 };
 
 function toUrlString(buffer) {
-  return buffer
-    .toString("base64")
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=/g, "");
+  return buffer.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
 }
 
 async function getUser(username) {
@@ -65,25 +48,13 @@ async function getUser(username) {
   const user = ddb
     .scan(params, function (err, data) {
       if (err) {
-        console.error(
-          "Unable to read item. Error JSON:",
-          JSON.stringify(err, null, 2)
-        );
+        console.error("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
       }
       return data;
     })
     .promise();
 
   return user;
-}
-
-async function recordUser(data) {
-  return await ddb
-    .put({
-      TableName: "Users",
-      Item: data,
-    })
-    .promise();
 }
 
 function errorResponse(errorMessage, awsRequestId, callback) {
