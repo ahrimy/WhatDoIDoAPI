@@ -28,32 +28,23 @@ exports.handler = async (event, context, callback) => {
   }
 };
 
-function toUrlString(buffer) {
-  return buffer.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
-}
-
 async function getUser(username) {
   const params = {
-    // Specify which items in the results are returned.
     FilterExpression: "Username = :username",
-    // Define the expression attribute value, which are substitutes for the values you want to compare.
     ExpressionAttributeValues: {
       ":username": username,
     },
-    // Set the projection expression, which the the attributes that you want.
     ProjectionExpression: "UserId",
     TableName: "Users",
   };
 
   const user = ddb
-    .scan(params, function (err, data) {
-      if (err) {
-        console.error("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
-      }
-      return data;
-    })
-    .promise();
-
+    .scan(params)
+    .promise()
+    .catch((err) => {
+      console.error("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
+      throw new Error(err);
+    });
   return user;
 }
 

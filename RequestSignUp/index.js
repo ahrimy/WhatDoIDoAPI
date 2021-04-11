@@ -8,9 +8,9 @@ exports.handler = async (event, context, callback) => {
   const { username, password, gender, age } = event;
 
   try {
+    // 아이디 중복확인 한번더
     const user = await getUser(username);
 
-    // userId로 조회한 username과 입력받은 username이 다른경우
     if (user.Items.length > 0) {
       return {
         statusCode: 409,
@@ -18,8 +18,7 @@ exports.handler = async (event, context, callback) => {
       };
     }
 
-    //정상적인 경우
-    // userId 생성
+    // 중복 아닌경우
     const userId = toUrlString(randomBytes(16));
     const hash = await bcrypt.hash(password, 8);
     // user 데이터 생성
@@ -31,7 +30,7 @@ exports.handler = async (event, context, callback) => {
       Age: age,
       RequestTime: new Date().toISOString(),
     };
-    const result = await recordUser(payload);
+    await recordUser(payload);
 
     const response = {
       statusCode: 201,
@@ -50,26 +49,21 @@ function toUrlString(buffer) {
 
 async function getUser(username) {
   const params = {
-    // Specify which items in the results are returned.
     FilterExpression: "Username = :username",
-    // Define the expression attribute value, which are substitutes for the values you want to compare.
     ExpressionAttributeValues: {
       ":username": username,
     },
-    // Set the projection expression, which the the attributes that you want.
     ProjectionExpression: "UserId",
     TableName: "Users",
   };
 
   const user = ddb
-    .scan(params, function (err, data) {
-      if (err) {
-        console.error("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
-      }
-      return data;
-    })
-    .promise();
-
+    .scan(params)
+    .promise()
+    .catch((err) => {
+      console.error("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
+      throw new Error(err);
+    });
   return user;
 }
 
