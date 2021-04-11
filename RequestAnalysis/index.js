@@ -106,8 +106,9 @@ exports.handler = async (event, context, callback) => {
     }
 
     // History 저장
+    const historyId = toUrlString(randomBytes(16));
     const data = {
-      HistoryId: toUrlString(randomBytes(16)),
+      HistoryId: historyId,
       Emotion: { Sadness: sadness, Joy: joy, Disgust: disgust, Fear: fear, Anger: anger },
       Type: type,
       RequestTime: new Date().toISOString(),
@@ -116,7 +117,7 @@ exports.handler = async (event, context, callback) => {
 
     const response = {
       statusCode: 200,
-      body: { emotion: userEmotion, sentences },
+      body: { emotion: userEmotion, sentences, historyId },
     };
 
     return response;
