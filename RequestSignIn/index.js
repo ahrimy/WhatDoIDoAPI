@@ -24,7 +24,6 @@ exports.handler = async (event, context, callback) => {
       statusCode: 200,
       body: {
         username: user.Items[0].Username,
-        password: user.Items[0].Password,
         userId: user.Items[0].UserId,
       },
     };
