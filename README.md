@@ -1,9 +1,9 @@
 # What Do I Do API
 
 산학 프로젝트 **지금 뭐하지?** 프로젝트의 API 개발
-> AWS Lambda에 업로드되는 소스코드
 
-## Lambda 🗂
+## Lambda
+_각각의 디렉토리는 AWS Lambda에 업로드_
 
 #### AddSentenceData
 > DB에 문장 데이터를 저장하기위한 함수
