@@ -51,73 +51,23 @@ exports.handler = async (event, context, callback) => {
       return analysisResults.result;
     });
 
-    //감정분석 결과 정렬
+    // History 생성
+    // 감정분석 결과 저장
     const { sadness, joy, fear, disgust, anger } = sentimentResult.emotion.document.emotion;
-    const emotions = [
-      {
-        type: "sadness",
-        score: sadness,
-      },
-      {
-        type: "joy",
-        score: joy,
-      },
-      {
-        type: "fear",
-        score: fear,
-      },
-      {
-        type: "disgust",
-        score: disgust,
-      },
-      {
-        type: "anger",
-        score: anger,
-      },
-    ];
 
-    emotions.sort(function (a, b) {
-      return b.score - a.score;
-    });
-
-    //DB 에서 문장 조회
-    const userEmotion = [emotions[0].type];
-    const sentences = [];
-    let result = await getSentence(userEmotion[0]);
-    let itemList = result.Items;
-    let index = 0;
-    if (emotions[0].score > 0.8) {
-      for (let i = 0; i < 4; i++) {
-        index = Math.floor(Math.random() * itemList.length);
-        sentences.push(itemList.splice(index, 1));
-      }
-    } else {
-      userEmotion.push(emotions[1].type);
-      for (let i = 0; i < 2; i++) {
-        index = Math.floor(Math.random() * itemList.length);
-        sentences.push(itemList.splice(index, 1));
-      }
-      result = await getSentence(userEmotion[1], sentences[0].SentenceId, sentences[1].SentenceId);
-      itemList = result.Items;
-      for (let i = 0; i < 2; i++) {
-        index = Math.floor(Math.random() * itemList.length);
-        sentences.push(itemList.splice(index, 1));
-      }
-    }
-
-    // History 저장
     const historyId = toUrlString(randomBytes(16));
-    const data = {
+    const payload = {
+      UserId: userId,
       HistoryId: historyId,
       Emotion: { Sadness: sadness, Joy: joy, Disgust: disgust, Fear: fear, Anger: anger },
       Type: type,
       RequestTime: new Date().toISOString(),
     };
-    await recordHistory(userId, data);
+    await recordHistory(payload);
 
     const response = {
       statusCode: 200,
-      body: { emotion: userEmotion, sentences, historyId },
+      body: { historyId },
     };
 
     return response;
@@ -143,57 +93,11 @@ function errorResponse(errorMessage, awsRequestId, callback) {
   });
 }
 
-async function getSentence(type, id1, id2) {
-  const params = {
-    FilterExpression: id1
-      ? "#contentType = :contentType AND not (Content in (:id1, :id2))"
-      : "#contentType = :contentType",
-    ExpressionAttributeValues: id1
-      ? {
-          ":contentType": type,
-          ":id1": id1,
-          ":id2": id2,
-        }
-      : {
-          ":contentType": type,
-        },
-    ExpressionAttributeNames: {
-      "#contentType": "Type",
-    },
-    ProjectionExpression: "SentenceId, Content, #contentType",
-    TableName: "Sentences",
-  };
-
-  const sentence = ddb
-    .scan(params)
-    .promise()
-    .catch((err) => {
-      console.error("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
-      throw new Error(err);
-    });
-
-  return sentence;
-}
-
-async function recordHistory(userId, data) {
-  const params = {
-    TableName: "Users",
-    Key: {
-      UserId: userId,
-    },
-    UpdateExpression: "set History = list_append(if_not_exists(History, :empty_list), :history)",
-    ExpressionAttributeValues: {
-      ":history": [data],
-      ":empty_list": [],
-    },
-    ReturnValues: "UPDATED_NEW",
-  };
-
-  return ddb
-    .update(params)
-    .promise()
-    .catch((err) => {
-      console.error("Unable to update item. Error JSON:", JSON.stringify(err, null, 2));
-      throw new Error(err);
-    });
+async function recordHistory(data) {
+  return await ddb
+    .put({
+      TableName: "History",
+      Item: data,
+    })
+    .promise();
 }
