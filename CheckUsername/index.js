@@ -4,10 +4,11 @@ const ddb = new AWS.DynamoDB.DocumentClient();
 
 exports.handler = async (event, context, callback) => {
   const { username } = event;
+  const decodedUserName = decodeURI(username);
 
   try {
     // 아이디 조회
-    const user = await getUser(username);
+    const user = await getUser(decodedUserName);
 
     // 이미 존재한다면 conflict reponse
     if (user.Items.length > 0) {
@@ -19,7 +20,7 @@ exports.handler = async (event, context, callback) => {
 
     const response = {
       statusCode: 200,
-      body: { message: `${username}은 사용가능한 아이디입니다.` },
+      body: { message: `${decodedUserName}은 사용가능한 아이디입니다.` },
     };
 
     return response;
