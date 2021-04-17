@@ -47,18 +47,29 @@ exports.handler = async (event, context, callback) => {
         },
       },
     };
-    const sentimentResult = await naturalLanguageUnderstanding.analyze(analyzeParams).then((analysisResults) => {
-      return analysisResults.result;
-    });
+    const sentimentResult = await naturalLanguageUnderstanding
+      .analyze(analyzeParams)
+      .then((analysisResults) => {
+        return analysisResults.result;
+      })
+      .catch((err) => {
+        if (err.code === 422) {
+          throw new Error("문장이 너무 짧아서 분석할 수 없습니다.");
+        }
+        throw new Error("분석할 수 없는 문장입니다.");
+      });
 
     // History 생성
     // 감정분석 결과 저장
     const { sadness, joy, fear, disgust, anger } = sentimentResult.emotion.document.emotion;
-
+    if (sadness + joy + fear + disgust + anger == 0) {
+      throw new Error("분석할 수 없는 문장입니다.");
+    }
     const historyId = toUrlString(randomBytes(16));
     const payload = {
       UserId: userId,
       HistoryId: historyId,
+      InputSentence: sentence,
       Emotion: { Sadness: sadness, Joy: joy, Disgust: disgust, Fear: fear, Anger: anger },
       Type: type,
       RequestTime: new Date().toISOString(),
@@ -67,7 +78,7 @@ exports.handler = async (event, context, callback) => {
 
     const response = {
       statusCode: 200,
-      body: { historyId },
+      body: { success: true, historyId },
     };
 
     return response;
@@ -83,12 +94,9 @@ function toUrlString(buffer) {
 function errorResponse(errorMessage, awsRequestId, callback) {
   callback(null, {
     statusCode: 500,
-    body: JSON.stringify({
-      Error: errorMessage,
-      Reference: awsRequestId,
-    }),
-    headers: {
-      "Access-Control-Allow-Origin": "*",
+    body: {
+      success: false,
+      message: errorMessage,
     },
   });
 }
