@@ -53,28 +53,28 @@ exports.handler = async (event, context, callback) => {
     let result = await getSentence(userEmotion[0]);
     let itemList = result.Items;
     let index = 0;
-    if (emotions[0].score > 0.8) {
-      for (let i = 0; i < 4; i++) {
-        index = Math.floor(Math.random() * itemList.length);
-        sentences.push(itemList.splice(index, 1));
-      }
-    } else {
-      userEmotion.push(emotions[1].type);
-      for (let i = 0; i < 2; i++) {
-        index = Math.floor(Math.random() * itemList.length);
-        sentences.push(itemList.splice(index, 1));
-      }
-      result = await getSentence(userEmotion[1], sentences[0].SentenceId, sentences[1].SentenceId);
-      itemList = result.Items;
-      for (let i = 0; i < 2; i++) {
-        index = Math.floor(Math.random() * itemList.length);
-        sentences.push(itemList.splice(index, 1));
-      }
+    // if (emotions[0].score > 0.8) {
+    for (let i = 0; i < 4; i++) {
+      index = Math.floor(Math.random() * itemList.length);
+      sentences.push(itemList.splice(index, 1));
     }
+    // } else {
+    //   userEmotion.push(emotions[1].type);
+    //   for (let i = 0; i < 2; i++) {
+    //     index = Math.floor(Math.random() * itemList.length);
+    //     sentences.push(itemList.splice(index, 1));
+    //   }
+    //   result = await getSentence(userEmotion[1], sentences[0].SentenceId, sentences[1].SentenceId);
+    //   itemList = result.Items;
+    //   for (let i = 0; i < 2; i++) {
+    //     index = Math.floor(Math.random() * itemList.length);
+    //     sentences.push(itemList.splice(index, 1));
+    //   }
+    // }
 
     const response = {
       statusCode: 200,
-      body: { emotion: userEmotion, sentences },
+      body: { emotion: userEmotion[0], sentences },
     };
 
     return response;
