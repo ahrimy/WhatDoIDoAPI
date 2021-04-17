@@ -60,7 +60,7 @@ exports.handler = async (event, context, callback) => {
 
     const resultsData = results.map(({ sentence, emotion }) => {
       return {
-        Sentence: sentence,
+        Sentence: sentence.text,
         Emotion: {
           Sadness: emotion.sadness,
           Joy: emotion.joy,
@@ -85,8 +85,9 @@ exports.handler = async (event, context, callback) => {
 };
 
 async function analyzeSentence(sentence) {
+  const { id, text } = sentence;
   //번역
-  const translateResult = await axios.post(API_URL, { source: "ko", target: "en", text: sentence }, translateOptions);
+  const translateResult = await axios.post(API_URL, { source: "ko", target: "en", text: text }, translateOptions);
   const sentenceEn = translateResult.data.message.result.translatedText;
 
   //감정분석
