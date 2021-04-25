@@ -23,12 +23,13 @@ exports.handler = async (event, context, callback) => {
     const hash = await bcrypt.hash(password, 8);
     // user 데이터 생성
     const payload = {
-      UserId: userId,
-      Username: username,
-      Password: hash,
-      Gender: gender,
-      Age: age,
-      RequestTime: new Date().toISOString(),
+      userId,
+      username,
+      password: hash,
+      gender,
+      age,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
     await recordUser(payload);
 
@@ -49,11 +50,11 @@ function toUrlString(buffer) {
 
 async function getUser(username) {
   const params = {
-    FilterExpression: "Username = :username",
+    FilterExpression: "username = :username",
     ExpressionAttributeValues: {
       ":username": username,
     },
-    ProjectionExpression: "UserId",
+    ProjectionExpression: "userId",
     TableName: "Users",
   };
 

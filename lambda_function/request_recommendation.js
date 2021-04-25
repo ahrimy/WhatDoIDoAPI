@@ -60,14 +60,8 @@ exports.handler = async (event, context, callback) => {
 
     const resultsData = results.map(({ sentence, emotion }) => {
       return {
-        Sentence: sentence.text,
-        Emotion: {
-          Sadness: emotion.sadness,
-          Joy: emotion.joy,
-          Fear: emotion.fear,
-          Disgust: emotion.disgust,
-          Anger: emotion.anger,
-        },
+        sentence: sentence.text,
+        emotion,
       };
     });
     await updateHistory(userId, historyId, resultsData);
@@ -86,6 +80,9 @@ exports.handler = async (event, context, callback) => {
 
 async function analyzeSentence(sentence) {
   const { id, text } = sentence;
+  if (text === "") {
+    return { sentence, message: "문장을 입력해주세요." };
+  }
   //번역
   const translateResult = await axios.post(API_URL, { source: "ko", target: "en", text: text }, translateOptions);
   const sentenceEn = translateResult.data.message.result.translatedText;
@@ -120,12 +117,12 @@ async function analyzeSentence(sentence) {
 async function recommendContents(userId, historyId, emotions) {
   const params = {
     Key: {
-      "UserId": userId,
-      "HistoryId": historyId,
+      "userId": userId,
+      "historyId": historyId,
     },
     ProjectionExpression: "#contentType",
     ExpressionAttributeNames: {
-      "#contentType": "Type",
+      "#contentType": "type",
     },
     TableName: "History",
   };
@@ -145,25 +142,25 @@ async function recommendContents(userId, historyId, emotions) {
         contentId: 1,
         title: `Avengers: Endgame`,
         desc: `After the devastating events of Avengers: Infinity War (2018), the universe is in ruins. With the help of remaining allies, the Avengers assemble once more in order to reverse Thanos' actions and restore balance to the universe.`,
-        img: `https://m.media-amazon.com/images/M/MV5BMTc5MDE2ODcwNV5BMl5BanBnXkFtZTgwMzI2NzQ2NzM@._V1_UX67_CR0,0,67,98_AL_.jpg`,
+        img: `https://user-images.githubusercontent.com/26592306/115239429-aeb21600-a159-11eb-8f1d-7f9e5565ce6c.jpeg`,
       },
       {
         contentId: 2,
         title: `Sound of Metal`,
         desc: `A heavy-metal drummer's life is thrown into freefall when he begins to lose his hearing.`,
-        img: `https://m.media-amazon.com/images/M/MV5BNjcyYjg0M2ItMzMyZS00NmM1LTlhZDMtN2MxN2RhNWY4YTkwXkEyXkFqcGdeQXVyNjY1MTg4Mzc@._V1_UX67_CR0,0,67,98_AL_.jpg`,
+        img: `https://user-images.githubusercontent.com/26592306/115239200-6e529800-a159-11eb-8bae-b00619d42b6b.jpeg`,
       },
       {
         contentId: 3,
         title: `The Trial of the Chicago 7`,
         desc: `The story of 7 people on trial stemming from various charges surrounding the uprising at the 1968 Democratic National Convention in Chicago, Illinois.`,
-        img: `https://m.media-amazon.com/images/M/MV5BYjYzOGE1MjUtODgyMy00ZDAxLTljYTgtNzk0Njg2YWQwMTZhXkEyXkFqcGdeQXVyMDM2NDM2MQ@@._V1_UX67_CR0,0,67,98_AL_.jpg`,
+        img: `https://user-images.githubusercontent.com/26592306/115239194-6c88d480-a159-11eb-84c7-d0d0b3ce3ba8.jpg`,
       },
       {
         contentId: 4,
         title: `Soul`,
         desc: `After landing the gig of a lifetime, a New York jazz pianist suddenly finds himself trapped in a strange land between Earth and the afterlife.`,
-        img: `https://m.media-amazon.com/images/M/MV5BZGE1MDg5M2MtNTkyZS00MTY5LTg1YzUtZTlhZmM1Y2EwNmFmXkEyXkFqcGdeQXVyNjA3OTI0MDc@._V1_UX67_CR0,0,67,98_AL_.jpg`,
+        img: `https://user-images.githubusercontent.com/26592306/115239177-6a267a80-a159-11eb-9b9c-6621df2790ee.jpeg`,
       },
     ];
   } else {
@@ -200,10 +197,10 @@ async function updateHistory(userId, historyId, data) {
   const params = {
     TableName: "History",
     Key: {
-      UserId: userId,
-      HistoryId: historyId,
+      userId,
+      historyId,
     },
-    UpdateExpression: "set Selected = :selectedSentence, RequestTime = :t",
+    UpdateExpression: "set selected = :selectedSentence, createdAt = :t",
     ExpressionAttributeValues: {
       ":selectedSentence": data,
       ":t": new Date().toISOString(),

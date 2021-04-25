@@ -19,27 +19,27 @@ exports.handler = async (event, context, callback) => {
       };
     }
     //감정분석 결과 정렬
-    const { Sadness, Joy, Fear, Disgust, Anger } = history.Item.Emotion;
+    const { sadness, joy, fear, disgust, anger } = history.Item.emotion;
     const emotions = [
       {
         type: "sadness",
-        score: Sadness,
+        score: sadness,
       },
       {
         type: "joy",
-        score: Joy,
+        score: joy,
       },
       {
         type: "fear",
-        score: Fear,
+        score: fear,
       },
       {
         type: "disgust",
-        score: Disgust,
+        score: disgust,
       },
       {
         type: "anger",
-        score: Anger,
+        score: anger,
       },
     ];
 
@@ -99,10 +99,10 @@ function errorResponse(errorMessage, awsRequestId, callback) {
 async function getHistory(userId, historyId) {
   const params = {
     Key: {
-      "UserId": userId,
-      "HistoryId": historyId,
+      "userId": userId,
+      "historyId": historyId,
     },
-    ProjectionExpression: "Emotion",
+    ProjectionExpression: "emotion",
     TableName: "History",
   };
 
@@ -118,7 +118,7 @@ async function getHistory(userId, historyId) {
 async function getSentence(type, id1, id2) {
   const params = {
     FilterExpression: id1
-      ? "#contentType = :contentType AND not (Content in (:id1, :id2))"
+      ? "#contentType = :contentType AND not (content in (:id1, :id2))"
       : "#contentType = :contentType",
     ExpressionAttributeValues: id1
       ? {
@@ -130,9 +130,9 @@ async function getSentence(type, id1, id2) {
           ":contentType": type,
         },
     ExpressionAttributeNames: {
-      "#contentType": "Type",
+      "#contentType": "type",
     },
-    ProjectionExpression: "SentenceId, Content, #contentType",
+    ProjectionExpression: "sentenceId, content, #contentType",
     TableName: "Sentences",
   };
 

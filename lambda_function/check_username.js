@@ -31,11 +31,11 @@ exports.handler = async (event, context, callback) => {
 
 async function getUser(username) {
   const params = {
-    FilterExpression: "Username = :username",
+    FilterExpression: "username = :username",
     ExpressionAttributeValues: {
       ":username": username,
     },
-    ProjectionExpression: "UserId",
+    ProjectionExpression: "userId",
     TableName: "Users",
   };
 

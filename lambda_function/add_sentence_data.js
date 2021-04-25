@@ -17,8 +17,8 @@ exports.handler = async (event, context, callback) => {
       sentenceId = toUrlString(randomBytes(16));
       content = requestBody.content;
     } else {
-      sentenceId = sentence.Items[0].SentenceId;
-      content = sentence.Items[0].Content;
+      sentenceId = sentence.Items[0].sentenceId;
+      content = sentence.Items[0].content;
     }
 
     // sentence 데이터 생성
@@ -41,11 +41,11 @@ function toUrlString(buffer) {
 
 async function getSentence(content) {
   const params = {
-    FilterExpression: "Content = :content",
+    FilterExpression: "content = :content",
     ExpressionAttributeValues: {
       ":content": content,
     },
-    ProjectionExpression: "SentenceId, Content",
+    ProjectionExpression: "sentenceId, content",
     TableName: "Sentences",
   };
 
@@ -65,10 +65,11 @@ async function recordSentence(type, sentenceId, content) {
     .put({
       TableName: "Sentences",
       Item: {
-        Type: type,
-        SentenceId: sentenceId,
-        Content: content,
-        RequestTime: new Date().toISOString(),
+        type: type,
+        sentenceId: sentenceId,
+        content: content,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       },
     })
     .promise();

@@ -11,7 +11,7 @@ exports.handler = async (event, context, callback) => {
   try {
     const user = await getUser(username);
 
-    const isSignedIn = user.Items.length > 0 ? await bcrypt.compare(password, user.Items[0].Password) : false;
+    const isSignedIn = user.Items.length > 0 ? await bcrypt.compare(password, user.Items[0].password) : false;
 
     if (!isSignedIn) {
       return {
@@ -23,8 +23,8 @@ exports.handler = async (event, context, callback) => {
     const response = {
       statusCode: 200,
       body: {
-        username: user.Items[0].Username,
-        userId: user.Items[0].UserId,
+        username: user.Items[0].username,
+        userId: user.Items[0].userId,
       },
     };
 
@@ -36,11 +36,11 @@ exports.handler = async (event, context, callback) => {
 
 async function getUser(username) {
   const params = {
-    FilterExpression: "Username = :username",
+    FilterExpression: "username = :username",
     ExpressionAttributeValues: {
       ":username": username,
     },
-    ProjectionExpression: "UserId, Password, Username",
+    ProjectionExpression: "userId, password, username",
     TableName: "Users",
   };
 

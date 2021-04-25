@@ -67,12 +67,13 @@ exports.handler = async (event, context, callback) => {
     }
     const historyId = toUrlString(randomBytes(16));
     const payload = {
-      UserId: userId,
-      HistoryId: historyId,
-      InputSentence: sentence,
-      Emotion: { Sadness: sadness, Joy: joy, Disgust: disgust, Fear: fear, Anger: anger },
-      Type: type,
-      RequestTime: new Date().toISOString(),
+      userId,
+      historyId,
+      sentence,
+      emotion: { sadness, joy, disgust, fear, anger },
+      type,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
     await recordHistory(payload);
 
