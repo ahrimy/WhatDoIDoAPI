@@ -17,8 +17,8 @@ def main(argv):
             #    print(f'Column names are {", ".join(row)}')
             #    line_count += 1
             #    continue
-            print(f'\t{idx} {title}')
-            crawling.search(idx, title)
+            print(f'\t{idx} {title} {author}')
+            crawling.search(idx, title, author)
             count += 1
             if count == 50 :
                 break;
