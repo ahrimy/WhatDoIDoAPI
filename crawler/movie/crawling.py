@@ -2,7 +2,7 @@ from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 import time
 import urllib.request
-import boto3
+#import boto3
 
 def search(idx, title):
     options = webdriver.ChromeOptions()
@@ -47,11 +47,12 @@ def search(idx, title):
             
             urllib.request.urlretrieve(imgUrl, f"images/{idx}.jpg")
             isSaved = True
-            data = open(f"images/{idx}.jpg", "rb")
-            s3 = boto3.resource('s3', region_name='ap-northeast-2')
-            s3.Bucket("whatdoido").put_object(Key=f"movies/{idx}.jpg", Body=data, ContentType="image/jpg")
-        except:
-            print("\terror")
+            #data = open(f"images/{idx}.jpg", "rb")
+            #s3 = boto3.resource('s3', region_name='ap-northeast-2')
+            #s3.Bucket("whatdoido").put_object(Key=f"movies/{idx}.jpg", Body=data, ContentType="image/jpg")
+        except Exception as err:
+            #print("\terror")
+            print(f"\t{err}")
             pass
         if isSaved:
             break
