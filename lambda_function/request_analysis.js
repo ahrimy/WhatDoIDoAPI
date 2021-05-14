@@ -69,8 +69,10 @@ exports.handler = async (event, context, callback) => {
     const payload = {
       userId,
       historyId,
-      sentence,
-      emotion: { sadness, joy, disgust, fear, anger },
+      init: {
+        sentence,
+        emotion: { sadness, joy, disgust, fear, anger },
+      },
       type,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
