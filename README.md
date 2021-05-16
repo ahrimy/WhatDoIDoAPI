@@ -17,8 +17,10 @@ _각각의 fuction은 AWS Lambda에 업로드_
 #### request_goal_example_sentences
 > History 의 감정에 따라서 사용자가 공감할 것 같다고 예상되는 예시 문장(goal)을 반환하는 함수
 >  
-#### request_goal_example_sentences
-> History 의 감정에 따라서 사용자가 공감할 것 같다고 예상되는 예시 문장(goal)을 반환하는 함수
+#### post_goal_sentence
+> 입력한 goal 문장 분석 후 대표 컨텐츠를 추천해주는 함수
+>  #### select_contents
+> 선택한 contents의 idx 를 History에 업데이트 하는 함수
 >  
 #### request_signin
 > 사용자가 입력한 아이디와 비밀번호의 일치 여부를 확인하는 함수
