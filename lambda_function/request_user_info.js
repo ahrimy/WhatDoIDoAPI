@@ -63,7 +63,7 @@ async function getHistory(userId) {
 async function getUser(userId) {
   const params = {
     Key: {
-      "userId": userId,
+      userId: userId,
     },
     ProjectionExpression: "username, age, gender",
     TableName: "Users",
