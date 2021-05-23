@@ -1,3 +1,4 @@
+//Lambda: PostPreference
 const AWS = require("aws-sdk");
 const ddb = new AWS.DynamoDB.DocumentClient();
 
@@ -6,8 +7,12 @@ exports.handler = async (event, context, callback) => {
 
   if (!userId || !historyId) {
     return {
-      statusCode: 403,
-      body: { message: "잘못된 접근입니다." },
+      body: { success: false, message: "userId 또는 historyId가 입력되지 않았습니다." },
+    };
+  }
+  if (!!selection || selection.length == 0) {
+    return {
+      body: { success: false, message: "선택된 컨텐츠가 없습니다." },
     };
   }
 
@@ -15,13 +20,12 @@ exports.handler = async (event, context, callback) => {
     await updateHistory(userId, historyId, selection);
 
     const response = {
-      statusCode: 200,
       body: { success: true },
     };
 
     return response;
   } catch (err) {
-    errorResponse(err.message, context.awsRequestId, callback);
+    errorResponse(err.message, callback);
   }
 };
 
@@ -49,9 +53,8 @@ async function updateHistory(userId, historyId, data) {
     });
 }
 
-function errorResponse(errorMessage, awsRequestId, callback) {
+function errorResponse(errorMessage, callback) {
   callback(null, {
-    statusCode: 500,
     body: {
       success: false,
       message: errorMessage,
