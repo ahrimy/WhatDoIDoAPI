@@ -1,3 +1,4 @@
+//Lambda: RequestAnalysis
 const randomBytes = require("crypto").randomBytes;
 const axios = require("axios");
 
@@ -28,8 +29,12 @@ exports.handler = async (event, context, callback) => {
   const { userId, sentence, type } = event;
   if (!userId) {
     return {
-      statusCode: 403,
-      body: { message: "잘못된 접근입니다." },
+      body: { success: false, message: "userId가 입력되지 않았습니다." },
+    };
+  }
+  if (!sentence || sentence == "") {
+    return {
+      body: { success: false, message: "문장이 입력되지 않았습니다." },
     };
   }
 
@@ -50,9 +55,11 @@ exports.handler = async (event, context, callback) => {
     const sentimentResult = await naturalLanguageUnderstanding
       .analyze(analyzeParams)
       .then((analysisResults) => {
+        console.log(analysisResults);
         return analysisResults.result;
       })
       .catch((err) => {
+        console.log(err);
         if (err.code === 422) {
           throw new Error("문장이 너무 짧아서 분석할 수 없습니다.");
         }
@@ -62,6 +69,7 @@ exports.handler = async (event, context, callback) => {
     // History 생성
     // 감정분석 결과 저장
     const { sadness, joy, fear, disgust, anger } = sentimentResult.emotion.document.emotion;
+    console.log(sentimentResult.emotion.document.emotion);
     if (sadness + joy + fear + disgust + anger == 0) {
       throw new Error("분석할 수 없는 문장입니다.");
     }
@@ -80,7 +88,6 @@ exports.handler = async (event, context, callback) => {
     await recordHistory(payload);
 
     const response = {
-      statusCode: 200,
       body: { success: true, historyId },
     };
 
@@ -94,16 +101,6 @@ function toUrlString(buffer) {
   return buffer.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
 }
 
-function errorResponse(errorMessage, awsRequestId, callback) {
-  callback(null, {
-    statusCode: 500,
-    body: {
-      success: false,
-      message: errorMessage,
-    },
-  });
-}
-
 async function recordHistory(data) {
   return await ddb
     .put({
@@ -111,4 +108,13 @@ async function recordHistory(data) {
       Item: data,
     })
     .promise();
+}
+
+function errorResponse(errorMessage, awsRequestId, callback) {
+  callback(null, {
+    body: {
+      success: false,
+      message: errorMessage,
+    },
+  });
 }

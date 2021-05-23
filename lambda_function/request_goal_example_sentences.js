@@ -1,3 +1,4 @@
+//Lambda: RequestSentences
 const AWS = require("aws-sdk");
 const ddb = new AWS.DynamoDB.DocumentClient();
 
@@ -5,8 +6,7 @@ exports.handler = async (event, context, callback) => {
   const { userId, historyId } = event;
   if (!userId || !historyId) {
     return {
-      statusCode: 403,
-      body: { message: "잘못된 접근입니다." },
+      body: { success: false, message: "userId 또는 historyId가 입력되지 않았습니다." },
     };
   }
 
@@ -14,12 +14,11 @@ exports.handler = async (event, context, callback) => {
     const history = await getHistory(userId, historyId);
     if (!history.Item) {
       return {
-        statusCode: 400,
-        body: { message: "잘못된 접근입니다." },
+        body: { success: false, message: "History 조회 불가" },
       };
     }
     //감정분석 결과 정렬
-    const { sadness, joy, fear, disgust, anger } = history.Item.emotion;
+    const { sadness, joy, fear, disgust, anger } = history.Item.init.emotion;
     const emotions = [
       {
         type: "sadness",
@@ -73,25 +72,20 @@ exports.handler = async (event, context, callback) => {
     // }
 
     const response = {
-      statusCode: 200,
-      body: { emotion: userEmotion[0], sentences },
+      body: { success: true, emotion: userEmotion[0], sentences },
     };
 
     return response;
   } catch (err) {
-    errorResponse(err.message, context.awsRequestId, callback);
+    errorResponse(err.message, callback);
   }
 };
 
-function errorResponse(errorMessage, awsRequestId, callback) {
+function errorResponse(errorMessage, callback) {
   callback(null, {
-    statusCode: 500,
-    body: JSON.stringify({
-      Error: errorMessage,
-      Reference: awsRequestId,
-    }),
-    headers: {
-      "Access-Control-Allow-Origin": "*",
+    body: {
+      success: false,
+      message: errorMessage,
     },
   });
 }
@@ -99,10 +93,10 @@ function errorResponse(errorMessage, awsRequestId, callback) {
 async function getHistory(userId, historyId) {
   const params = {
     Key: {
-      "userId": userId,
-      "historyId": historyId,
+      userId: userId,
+      historyId: historyId,
     },
-    ProjectionExpression: "emotion",
+    ProjectionExpression: "init",
     TableName: "History",
   };
 
