@@ -1,3 +1,4 @@
+//Lambda: PostGoalSentence
 const axios = require("axios");
 const FormData = require("form-data");
 
@@ -28,14 +29,12 @@ exports.handler = async (event, context, callback) => {
 
   if (!userId || !historyId) {
     return {
-      statusCode: 403,
-      body: { message: "잘못된 접근입니다." },
+      body: { success: false, message: "userId 또는 historyId 가 입력되지 않았습니다." },
     };
   }
-  if (!sentence) {
+  if (!sentence || sentence == "") {
     return {
-      statusCode: 400,
-      body: { success: false, message: "문장을 입력해주세요" },
+      body: { success: false, message: "문장이 입력되지 않았습니다." },
     };
   }
 
@@ -44,16 +43,19 @@ exports.handler = async (event, context, callback) => {
 
     if (result.message) {
       return {
-        statusCode: 400,
         body: { success: false, message: result.message },
       };
     }
     await updateHistory(userId, historyId, { sentence: result.sentence, emotion: result.emotion });
     const { type, init } = await getTypeInit(userId, historyId);
     const recommendedContents = await recommendContents(type, init, result.emotion, result.sentenceEn);
+    if (recommendedContents.length < 4) {
+      return {
+        body: { success: false, message: "컨텐츠 추천 과정에서 에러 발생" },
+      };
+    }
 
     const response = {
-      statusCode: 200,
       body: { success: true, type, contents: recommendedContents },
     };
 
@@ -67,7 +69,7 @@ async function analyzeSentence(sentence) {
   //번역
   const translateResult = await axios.post(API_URL, { source: "ko", target: "en", text: sentence }, translateOptions);
   const sentenceEn = translateResult.data.message.result.translatedText;
-
+  console.log(sentenceEn);
   //감정분석
   const analyzeParams = {
     text: sentenceEn,
@@ -125,58 +127,50 @@ async function recommendContents(type, init, emotion, sentence) {
     let form = new FormData();
     form.append("init_emotion", JSON.stringify(init.emotion));
     form.append("goal_emotion", JSON.stringify(emotion));
-    // const resultsBySentiment =  axios.post("http://ec2-52-15-223-0.us-east-2.compute.amazonaws.com:5000/movie/emotion",form,{
-    //   headers: {
-    //         ...form.getHeaders()
-    //       },
-    // }).catch(err => console.log(err))
+    const resultsBySentiment = axios
+      .post("http://49.50.173.151:5000/movie/emotion", form, {
+        headers: {
+          ...form.getHeaders(),
+        },
+      })
+      .catch((err) => console.log(err));
     form = new FormData();
     form.append("sentence", sentence);
     const resultsBySentence = axios
-      .post("http://ec2-52-15-223-0.us-east-2.compute.amazonaws.com:5000/movie/sentence", form, {
+      .post("http://49.50.173.151:5000/movie/sentence", form, {
         headers: {
           ...form.getHeaders(),
         },
       })
       .catch((err) => console.log(err));
     let contentsList = [];
-    contentsList = await Promise.all([
-      resultsBySentence,
-      // , resultsBySentiment
-    ])
-      .then((responses) => [
-        ...responses[0].data,
-        // , ...responses[1].data
-      ])
+    contentsList = await Promise.all([resultsBySentence, resultsBySentiment])
+      .then((responses) => [...responses[0].data, ...responses[1].data])
       .catch((err) => console.log(err.message));
     return contentsList;
   } else {
     let form = new FormData();
     form.append("init_emotion", JSON.stringify(init.emotion));
     form.append("goal_emotion", JSON.stringify(emotion));
-    // const resultsBySentiment =  axios.post("http://ec2-52-15-223-0.us-east-2.compute.amazonaws.com:5000/book/emotion",form,{
-    //   headers: {
-    //         ...form.getHeaders()
-    //       },
-    // }).catch(err => console.log(err))
+    const resultsBySentiment = axios
+      .post("http://49.50.173.151:5000/book/emotion", form, {
+        headers: {
+          ...form.getHeaders(),
+        },
+      })
+      .catch((err) => console.log(err));
     form = new FormData();
     form.append("sentence", sentence);
     const resultsBySentence = axios
-      .post("http://ec2-52-15-223-0.us-east-2.compute.amazonaws.com:5000/book/sentence", form, {
+      .post("http://49.50.173.151:5000/book/sentence", form, {
         headers: {
           ...form.getHeaders(),
         },
       })
       .catch((err) => console.log(err));
     let contentsList = [];
-    contentsList = await Promise.all([
-      resultsBySentence,
-      // , resultsBySentiment
-    ])
-      .then((responses) => [
-        ...responses[0].data,
-        // , ...responses[1].data
-      ])
+    contentsList = await Promise.all([resultsBySentence, resultsBySentiment])
+      .then((responses) => [...responses[0].data, ...responses[1].data])
       .catch((err) => console.log(err.message));
     return contentsList;
   }
@@ -208,7 +202,6 @@ async function updateHistory(userId, historyId, data) {
 
 function errorResponse(errorMessage, awsRequestId, callback) {
   callback(null, {
-    statusCode: 500,
     body: {
       success: false,
       message: errorMessage,
