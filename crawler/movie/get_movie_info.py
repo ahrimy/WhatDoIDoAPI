@@ -1,10 +1,11 @@
+import sys
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 import time
 import urllib.request
 #import boto3
 
-def search(idx, title):
+def search(title):
     options = webdriver.ChromeOptions()
     options.add_argument('--ignore-certificate-errors')
     options.add_argument('--ignore-ssl-errors')
@@ -27,3 +28,6 @@ def search(idx, title):
         pass
 
     driver.close()
+
+if __name__ == "__main__":
+    search(sys.argv)
