@@ -30,4 +30,4 @@ def search(title):
     driver.close()
 
 if __name__ == "__main__":
-    search(sys.argv)
+    search(sys.argv[1])
