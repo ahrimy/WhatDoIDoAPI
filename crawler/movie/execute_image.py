@@ -1,6 +1,6 @@
 import sys
 import csv
-import crawling
+import get_image
 
 def main(argv):
     skip = int(argv[1])
@@ -17,7 +17,7 @@ def main(argv):
             #    line_count += 1
             #    continue
             print(f'\t{idx} {title}')
-            crawling.search(idx, title)
+            get_image.search(idx, title)
             count += 1
             if count == 50 :
                 break;
