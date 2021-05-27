@@ -11,7 +11,7 @@ def search(title):
     options.add_argument('--ignore-ssl-errors')
     options.add_argument('--headless')
     options.add_experimental_option("excludeSwitches", ["enable-logging"])
-    driver = webdriver.Chrome(executable_path='/home/ubuntu/chromedriver', options=options)
+    driver = webdriver.Chrome(executable_path='/home/ahrimy/chromedriver', options=options)
     driver.get("https://www.google.co.kr")
 
     elem = driver.find_element_by_name("q")
