@@ -4,6 +4,9 @@ images/
 # data
 *.csv
 
+# chromedriver
+chromedriver.exe
+
 # Logs
 logs
 *.log
