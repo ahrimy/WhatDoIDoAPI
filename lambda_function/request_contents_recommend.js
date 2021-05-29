@@ -1,4 +1,3 @@
-//Lambda: RequestContents
 const axios = require("axios");
 const FormData = require("form-data");
 const AWS = require("aws-sdk");
@@ -42,11 +41,15 @@ exports.handler = async (event, context, callback) => {
     const response = await axios(config)
       .then(function (response) {
         const result = JSON.parse(response.data.items);
-        return { success: true, data: result };
+        const resultWithImage = result.map((item) => {
+          item.image = `https://whatdoido.kro.kr/${type}/${item.idx}.jpg`;
+          return item;
+        });
+        return { success: true, type, data: result };
       })
       .catch(function (error) {
         console.log(error);
-        return { success: false, message: "컨텐츠 요청 중 에러가 발생하였습니다." };
+        return { success: false, type, message: "컨텐츠 요청 중 에러가 발생하였습니다." };
       });
 
     return {
