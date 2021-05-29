@@ -1,4 +1,3 @@
-//Lambda: RequestAnalysis
 const randomBytes = require("crypto").randomBytes;
 const axios = require("axios");
 
@@ -82,6 +81,8 @@ exports.handler = async (event, context, callback) => {
         emotion: { sadness, joy, disgust, fear, anger },
       },
       type,
+      like: { book: [], movie: [] },
+      dislike: { book: [], movie: [] },
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
