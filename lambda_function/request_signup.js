@@ -28,6 +28,8 @@ exports.handler = async (event, context, callback) => {
       password: hash,
       gender,
       age,
+      like: { book: [], movie: [] },
+      dislike: { book: [], movie: [] },
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
