@@ -1,4 +1,3 @@
-//Lambda: PostPreference
 const AWS = require("aws-sdk");
 const ddb = new AWS.DynamoDB.DocumentClient();
 
@@ -10,7 +9,7 @@ exports.handler = async (event, context, callback) => {
       body: { success: false, message: "userId 또는 historyId가 입력되지 않았습니다." },
     };
   }
-  if (!!selection || selection.length == 0) {
+  if (!selection || selection.length == 0) {
     return {
       body: { success: false, message: "선택된 컨텐츠가 없습니다." },
     };
