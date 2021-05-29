@@ -1,4 +1,3 @@
-//Lambda: PostGoalSentence
 const axios = require("axios");
 const FormData = require("form-data");
 
@@ -46,7 +45,7 @@ exports.handler = async (event, context, callback) => {
         body: { success: false, message: result.message },
       };
     }
-    await updateHistory(userId, historyId, { sentence: result.sentence, emotion: result.emotion });
+    await updateHistory(userId, historyId, result);
     const { type, init } = await getTypeInit(userId, historyId);
     const recommendedContents = await recommendContents(type, init, result.emotion, result.sentenceEn);
     if (recommendedContents.length < 4) {
@@ -54,6 +53,10 @@ exports.handler = async (event, context, callback) => {
         body: { success: false, message: "컨텐츠 추천 과정에서 에러 발생" },
       };
     }
+    recommendedContents.map((item) => {
+      item.image = `https://whatdoido.kro.kr/${type}/${item.idx}.jpg`;
+      return item;
+    });
 
     const response = {
       body: { success: true, type, contents: recommendedContents },
