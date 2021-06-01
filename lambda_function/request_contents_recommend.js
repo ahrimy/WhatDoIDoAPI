@@ -38,23 +38,50 @@ exports.handler = async (event, context, callback) => {
       data: data,
     };
 
-    const response = await axios(config)
-      .then(function (response) {
-        const result = JSON.parse(response.data.items);
-        const resultWithImage = result.map((item) => {
-          item.image = `https://whatdoido.kro.kr/${type}/${item.idx}.jpg`;
-          return item;
-        });
-        return { success: true, type, data: result };
-      })
-      .catch(function (error) {
-        console.log(error);
-        return { success: false, type, message: "컨텐츠 요청 중 에러가 발생하였습니다." };
-      });
+    if (userId != -1) {
+      const user = getUser(userId, type);
+      const contents = axios(config);
 
-    return {
-      body: response,
-    };
+      const response = await Promise.all([user, contents])
+        .then((responses) => {
+          const likeContents = responses[0].like[type];
+          const dislikeContents = responses[0].dislike[type];
+          console.log(responses[0]);
+          const result = JSON.parse(responses[1].data.items);
+          const contentsList = result.filter((item) => {
+            item.preferenceFlag = likeContents.includes(item.idx) ? 1 : 0;
+            item.image = `https://whatdoido.kro.kr/${type}/${item.idx}.jpg`;
+            return !dislikeContents.includes(item.idx);
+          });
+          return { success: true, type, data: contentsList };
+        })
+        .catch(function (error) {
+          console.log(error);
+          return { success: false, message: "컨텐츠 요청 중 에러가 발생하였습니다." };
+        });
+      return {
+        body: response,
+      };
+    } else {
+      const response = await axios(config)
+        .then(function (response) {
+          const result = JSON.parse(response.data.items);
+          result.map((item) => {
+            item.preferenceFlag = 0;
+            item.image = `https://whatdoido.kro.kr/${type}/${item.idx}.jpg`;
+            return item;
+          });
+          return { success: true, type, data: result };
+        })
+        .catch(function (error) {
+          console.log(error);
+          return { success: false, message: "컨텐츠 요청 중 에러가 발생하였습니다." };
+        });
+
+      return {
+        body: response,
+      };
+    }
   } catch (err) {
     errorResponse(err.message, callback);
   }
@@ -71,6 +98,29 @@ async function getHistory(userId, historyId) {
       "#contentType": "type",
     },
     TableName: "History",
+  };
+
+  return await ddb
+    .get(params)
+    .promise()
+    .then((data) => data.Item)
+    .catch((err) => {
+      console.error("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
+    });
+}
+
+async function getUser(userId, type) {
+  const params = {
+    Key: {
+      userId: userId,
+    },
+    ProjectionExpression: "#like.#contentType, #dislike.#contentType",
+    ExpressionAttributeNames: {
+      "#like": "like",
+      "#dislike": "dislike",
+      "#contentType": type,
+    },
+    TableName: "Users",
   };
 
   return await ddb
