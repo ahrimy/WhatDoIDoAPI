@@ -12,6 +12,7 @@
   "dependencies": {
     "axios": "^0.21.1",
     "bcryptjs": "^2.4.3",
-    "form-data": "^4.0.0"
+    "form-data": "^4.0.0",
+    "uuid4": "^2.0.2"
   }
 }
