@@ -1,3 +1,8 @@
+/**
+ * Lambda: PostContentsPreference
+ * 컨텐츠에 대한 사용자의 선호도 저장
+ */
+
 const AWS = require("aws-sdk");
 const ddb = new AWS.DynamoDB.DocumentClient();
 
@@ -20,16 +25,15 @@ exports.handler = async (event, context, callback) => {
 
   try {
     if (userId != -1) {
-      const userPreference = await updateUserPreference({
+      const userPreference = updateUserPreference({
         userId,
         type,
         isLike,
         contentId,
       });
-      const historyPreference = await updateHistoryPreference({
+      const historyPreference = updateHistoryPreference({
         userId,
         historyId,
-        type,
         isLike,
         contentId,
       });
@@ -41,19 +45,24 @@ exports.handler = async (event, context, callback) => {
       await updateHistoryPreference({
         userId,
         historyId,
-        type,
         isLike,
         contentId,
+      }).catch((err) => {
+        console.log(err.message);
+        throw new Error(err);
       });
     }
 
-    const response = {
+    return {
       body: { success: true },
     };
-
-    return response;
   } catch (err) {
-    errorResponse(err.message, callback);
+    return {
+      body: {
+        success: false,
+        message: err.message,
+      },
+    };
   }
 };
 
@@ -84,23 +93,15 @@ async function updateUserPreference({ userId, type, isLike, contentId }) {
   }
   return updateUser({
     userId,
-    contentId,
-    isLike,
     type,
     dislikeContents,
     likeContents,
   });
 }
-async function updateHistoryPreference({
-  userId,
-  historyId,
-  type,
-  isLike,
-  contentId,
-}) {
-  const preference = await getHistory({ userId, historyId, type });
-  const dislikeContents = preference.dislike[type];
-  const likeContents = preference.like[type];
+async function updateHistoryPreference({ userId, historyId, isLike, contentId }) {
+  const preference = await getHistory({ userId, historyId });
+  const dislikeContents = preference.dislike;
+  const likeContents = preference.like;
   const dislikeIdx = dislikeContents.indexOf(contentId);
   const likeIdx = likeContents.indexOf(contentId);
   if (isLike) {
@@ -121,34 +122,22 @@ async function updateHistoryPreference({
   return updateHistory({
     userId,
     historyId,
-    contentId,
-    isLike,
-    type,
     dislikeContents,
     likeContents,
   });
 }
 
-async function updateHistory({
-  userId,
-  historyId,
-  contentId,
-  isLike,
-  type,
-  dislikeContents,
-  likeContents,
-}) {
+async function updateHistory({ userId, historyId, dislikeContents, likeContents }) {
   const params = {
     TableName: "History",
     Key: {
       userId,
       historyId,
     },
-    UpdateExpression: `set #like.#type = :likeContents, #dislike.#type = :dislikeContents, updatedAt = :t`,
+    UpdateExpression: `set #like = :likeContents, #dislike = :dislikeContents, updatedAt = :t`,
     ExpressionAttributeNames: {
       "#like": "like",
       "#dislike": "dislike",
-      "#type": type,
     },
     ExpressionAttributeValues: {
       ":dislikeContents": dislikeContents,
@@ -158,25 +147,9 @@ async function updateHistory({
     ReturnValues: "UPDATED_NEW",
   };
 
-  return ddb
-    .update(params)
-    .promise()
-    .catch((err) => {
-      console.error(
-        "Unable to update item. Error JSON:",
-        JSON.stringify(err, null, 2)
-      );
-      throw new Error(err);
-    });
+  return ddb.update(params).promise();
 }
-async function updateUser({
-  userId,
-  contentId,
-  isLike,
-  type,
-  dislikeContents,
-  likeContents,
-}) {
+async function updateUser({ userId, type, dislikeContents, likeContents }) {
   if (userId != -1) {
     const params = {
       TableName: "Users",
@@ -197,16 +170,7 @@ async function updateUser({
       ReturnValues: "UPDATED_NEW",
     };
 
-    return ddb
-      .update(params)
-      .promise()
-      .catch((err) => {
-        console.error(
-          "Unable to update item. Error JSON:",
-          JSON.stringify(err, null, 2)
-        );
-        throw new Error(err);
-      });
+    return ddb.update(params).promise();
   }
 }
 
@@ -224,54 +188,27 @@ async function getUser({ userId, type }) {
     TableName: "Users",
   };
 
-  const result = await ddb
+  return ddb
     .get(params)
     .promise()
-    .then((data) => data.Item)
-    .catch((err) => {
-      console.error(
-        "Unable to read item. Error JSON:",
-        JSON.stringify(err, null, 2)
-      );
-      throw new Error(err);
-    });
-  return result;
+    .then((data) => data.Item);
 }
-async function getHistory({ userId, historyId, type }) {
+async function getHistory({ userId, historyId }) {
   const params = {
     Key: {
       userId,
       historyId,
     },
-    ProjectionExpression: "#like.#contentType, #dislike.#contentType",
+    ProjectionExpression: "#like, #dislike",
     ExpressionAttributeNames: {
       "#like": "like",
       "#dislike": "dislike",
-      "#contentType": type,
     },
     TableName: "History",
   };
 
-  const result = await ddb
+  return ddb
     .get(params)
     .promise()
-    .then((data) => data.Item)
-    .catch((err) => {
-      console.error(
-        "Unable to read item. Error JSON:",
-        JSON.stringify(err, null, 2)
-      );
-      throw new Error(err);
-    });
-  console.log(result);
-  return result;
-}
-
-function errorResponse(errorMessage, callback) {
-  callback(null, {
-    body: {
-      success: false,
-      message: errorMessage,
-    },
-  });
+    .then((data) => data.Item);
 }
