@@ -4,6 +4,9 @@ images/
 # data
 *.csv
 
+# module.zip
+*.zip
+
 # chromedriver
 chromedriver.exe
 
