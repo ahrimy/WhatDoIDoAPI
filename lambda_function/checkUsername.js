@@ -1,8 +1,12 @@
-const AWS = require("aws-sdk");
+/**
+ * Lambda: CheckUsername
+ * 아이디 중복 확인
+ */
 
+const AWS = require("aws-sdk");
 const ddb = new AWS.DynamoDB.DocumentClient();
 
-exports.handler = async (event, context, callback) => {
+exports.handler = async (event) => {
   const { username } = event;
   const decodedUserName = decodeURI(username);
 
@@ -18,14 +22,18 @@ exports.handler = async (event, context, callback) => {
       };
     }
 
-    const response = {
+    return {
       statusCode: 200,
       body: { message: `${decodedUserName}은 사용가능한 아이디입니다.` },
     };
-
-    return response;
   } catch (err) {
-    errorResponse(err.message, context.awsRequestId, callback);
+    return {
+      statusCode: 500,
+      body: {
+        success: false,
+        message: err.message,
+      },
+    };
   }
 };
 
@@ -39,25 +47,11 @@ async function getUser(username) {
     TableName: "Users",
   };
 
-  const user = ddb
+  return ddb
     .scan(params)
     .promise()
     .catch((err) => {
       console.error("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
       throw new Error(err);
     });
-  return user;
-}
-
-function errorResponse(errorMessage, awsRequestId, callback) {
-  callback(null, {
-    statusCode: 500,
-    body: JSON.stringify({
-      Error: errorMessage,
-      Reference: awsRequestId,
-    }),
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-    },
-  });
 }
