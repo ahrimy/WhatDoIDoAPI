@@ -1,11 +1,13 @@
-const randomBytes = require("crypto").randomBytes;
+/**
+ * Lambda: RequestSignIn
+ * 로그인
+ */
+
 const bcrypt = require("bcryptjs");
-
 const AWS = require("aws-sdk");
-
 const ddb = new AWS.DynamoDB.DocumentClient();
 
-exports.handler = async (event, context, callback) => {
+exports.handler = async (event) => {
   const { username, password } = event;
 
   try {
@@ -30,7 +32,13 @@ exports.handler = async (event, context, callback) => {
 
     return response;
   } catch (err) {
-    errorResponse(err.message, context.awsRequestId, callback);
+    return {
+      statusCode: 500,
+      body: {
+        success: false,
+        message: err.message,
+      },
+    };
   }
 };
 
@@ -44,25 +52,11 @@ async function getUser(username) {
     TableName: "Users",
   };
 
-  const user = ddb
+  return ddb
     .scan(params)
     .promise()
     .catch((err) => {
       console.error("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
       throw new Error(err);
     });
-  return user;
-}
-
-function errorResponse(errorMessage, awsRequestId, callback) {
-  callback(null, {
-    statusCode: 500,
-    body: JSON.stringify({
-      Error: errorMessage,
-      Reference: awsRequestId,
-    }),
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-    },
-  });
 }
