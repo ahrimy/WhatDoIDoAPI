@@ -1,7 +1,12 @@
+/**
+ * Lambda: PostSelectedContents
+ * 컨텐츠 선택
+ */
+
 const AWS = require("aws-sdk");
 const ddb = new AWS.DynamoDB.DocumentClient();
 
-exports.handler = async (event, context, callback) => {
+exports.handler = async (event) => {
   const { userId, historyId, selection } = event;
 
   if (!userId || !historyId) {
@@ -24,7 +29,12 @@ exports.handler = async (event, context, callback) => {
 
     return response;
   } catch (err) {
-    errorResponse(err.message, callback);
+    return {
+      body: {
+        success: false,
+        message: err.message,
+      },
+    };
   }
 };
 
@@ -50,13 +60,4 @@ async function updateHistory(userId, historyId, data) {
       console.error("Unable to update item. Error JSON:", JSON.stringify(err, null, 2));
       throw new Error(err);
     });
-}
-
-function errorResponse(errorMessage, callback) {
-  callback(null, {
-    body: {
-      success: false,
-      message: errorMessage,
-    },
-  });
 }
