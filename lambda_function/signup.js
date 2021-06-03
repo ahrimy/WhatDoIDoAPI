@@ -1,15 +1,19 @@
-const randomBytes = require("crypto").randomBytes;
-const bcrypt = require("bcryptjs");
+/**
+ * Lambda: RequestSignUp
+ * 회원가입
+ */
 
+const bcrypt = require("bcryptjs");
+const uuid4 = require("uuid4");
 const AWS = require("aws-sdk");
 const ddb = new AWS.DynamoDB.DocumentClient();
 
-exports.handler = async (event, context, callback) => {
+exports.handler = async (event) => {
   const { username, password, gender, age } = event;
 
   try {
     // 아이디 중복확인 한번더
-    const user = await getUser(username);
+    const user = await getUsername(username);
 
     if (user.Items.length > 0) {
       return {
@@ -19,7 +23,7 @@ exports.handler = async (event, context, callback) => {
     }
 
     // 중복 아닌경우
-    const userId = toUrlString(randomBytes(16));
+    const userId = uuid4();
     const hash = await bcrypt.hash(password, 8);
     // user 데이터 생성
     const payload = {
@@ -33,24 +37,24 @@ exports.handler = async (event, context, callback) => {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
-    await recordUser(payload);
+    await createUser(payload);
 
-    const response = {
+    return {
       statusCode: 201,
       body: { message: `${username}님, 가입이 완료되었습니다.` },
     };
-
-    return response;
   } catch (err) {
-    errorResponse(err.message, context.awsRequestId, callback);
+    return {
+      statusCode: 500,
+      body: {
+        success: false,
+        message: err.message,
+      },
+    };
   }
 };
 
-function toUrlString(buffer) {
-  return buffer.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
-}
-
-async function getUser(username) {
+async function getUsername(username) {
   const params = {
     FilterExpression: "username = :username",
     ExpressionAttributeValues: {
@@ -60,34 +64,24 @@ async function getUser(username) {
     TableName: "Users",
   };
 
-  const user = ddb
+  return ddb
     .scan(params)
     .promise()
     .catch((err) => {
       console.error("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
       throw new Error(err);
     });
-  return user;
 }
 
-async function recordUser(data) {
-  return await ddb
+async function createUser(data) {
+  return ddb
     .put({
       TableName: "Users",
       Item: data,
     })
-    .promise();
-}
-
-function errorResponse(errorMessage, awsRequestId, callback) {
-  callback(null, {
-    statusCode: 500,
-    body: JSON.stringify({
-      Error: errorMessage,
-      Reference: awsRequestId,
-    }),
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-    },
-  });
+    .promise()
+    .catch((err) => {
+      console.error("Unable to create item. Error JSON:", JSON.stringify(err, null, 2));
+      throw new Error(err);
+    });
 }
