@@ -1,9 +1,14 @@
+/**
+ * Lambda: RequestContents
+ * 컨텐츠 추천 요청
+ */
+
 const axios = require("axios");
 const FormData = require("form-data");
 const AWS = require("aws-sdk");
 const ddb = new AWS.DynamoDB.DocumentClient();
 
-exports.handler = async (event, context, callback) => {
+exports.handler = async (event) => {
   try {
     const { userId, historyId } = event;
 
@@ -31,7 +36,7 @@ exports.handler = async (event, context, callback) => {
 
     const config = {
       method: "post",
-      url: type == "book" ? "http://49.50.173.151:5000/book/content" : "http://49.50.173.151:5000/movie/content",
+      url: `http://49.50.173.151:5000/${type}/content`,
       headers: {
         ...data.getHeaders(),
       },
@@ -46,7 +51,6 @@ exports.handler = async (event, context, callback) => {
         .then((responses) => {
           const likeContents = responses[0].like[type];
           const dislikeContents = responses[0].dislike[type];
-          console.log(responses[0]);
           const result = JSON.parse(responses[1].data.items);
           const contentsList = result.filter((item) => {
             item.preferenceFlag = likeContents.includes(item.idx) ? 1 : 0;
@@ -57,7 +61,7 @@ exports.handler = async (event, context, callback) => {
         })
         .catch(function (error) {
           console.log(error);
-          return { success: false, message: "컨텐츠 요청 중 에러가 발생하였습니다." };
+          throw new Error("컨텐츠 요청 중 에러가 발생하였습니다.");
         });
       return {
         body: response,
@@ -75,7 +79,7 @@ exports.handler = async (event, context, callback) => {
         })
         .catch(function (error) {
           console.log(error);
-          return { success: false, message: "컨텐츠 요청 중 에러가 발생하였습니다." };
+          throw new Error("컨텐츠 요청 중 에러가 발생하였습니다.");
         });
 
       return {
@@ -83,7 +87,12 @@ exports.handler = async (event, context, callback) => {
       };
     }
   } catch (err) {
-    errorResponse(err.message, callback);
+    return {
+      body: {
+        success: false,
+        message: err.message,
+      },
+    };
   }
 };
 
@@ -100,12 +109,13 @@ async function getHistory(userId, historyId) {
     TableName: "History",
   };
 
-  return await ddb
+  return ddb
     .get(params)
     .promise()
     .then((data) => data.Item)
     .catch((err) => {
       console.error("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
+      throw new Error(err);
     });
 }
 
@@ -123,20 +133,12 @@ async function getUser(userId, type) {
     TableName: "Users",
   };
 
-  return await ddb
+  return ddb
     .get(params)
     .promise()
     .then((data) => data.Item)
     .catch((err) => {
       console.error("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
+      throw new Error(err);
     });
-}
-
-function errorResponse(errorMessage, callback) {
-  callback(null, {
-    body: {
-      success: false,
-      message: errorMessage,
-    },
-  });
 }
