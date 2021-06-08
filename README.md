@@ -39,6 +39,9 @@ _각각의 fuction은 AWS Lambda에 업로드_
 #### deleteContentsPreference
 > 사용자가 좋아요/싫어요 선택했던 컨텐츠 정보를 삭제하는 함수
 >
+#### getUserPreference
+> 사용자가 좋아요/싫어요 선택했던 컨텐츠 정보를 조회하는 함수
+>
 <hr />
 
 ### [API Docs 📑](https://documenter.getpostman.com/view/12312893/TzCQbRzB) 
