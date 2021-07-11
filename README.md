@@ -1,7 +1,7 @@
 # What Do I Do API
 
 산학 프로젝트 **지금 뭐하지?** 프로젝트의 API 개발   
-🔗 [지금 뭐하지?](https://whatdoido.kro.kr/)
+🔗 ~~[지금 뭐하지?](https://whatdoido.kro.kr/)~~
 
 ## Lambda
 _각각의 fuction은 AWS Lambda에 업로드_
