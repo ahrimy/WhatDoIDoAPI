@@ -3,7 +3,89 @@
 산학 프로젝트 **지금 뭐하지?** 프로젝트의 API 개발   
 🔗 ~~[지금 뭐하지?](https://whatdoido.kro.kr/)~~
 
-## Lambda
+## 🌟 실행 화면
+<details>
+    <summary><b> 회원 관리 </b></summary>
+    <table style="text-align:center;">
+      <tbody>
+        <tr>
+          <td>회원가입</td>
+        </tr>
+        <tr>
+          <td>
+            <img width="900" alt="Screen Shot 2021-09-29 at 2 40 11 AM" src="https://user-images.githubusercontent.com/26592306/135138045-4b7e6267-35f1-4d3f-8331-732c08f711eb.png">
+          </td>
+        </tr>
+        <tr>
+          <td>로그인</td>
+        </tr>
+        <tr>
+          <td>
+            <img width="900" alt="Screen Shot 2021-09-29 at 2 40 27 AM" src="https://user-images.githubusercontent.com/26592306/135138051-b5a5536a-abad-498e-9907-6dcab2e5cb6d.png">
+          </td>
+        </tr>
+      </tbody>
+    </table>
+</details>
+<details>
+    <summary><b> 컨텐츠 추천 </b></summary>
+     <table style="text-align:center;">
+      <tbody>
+        <tr>
+          <td>초기 문장 입력</td>
+        </tr>
+        <tr>
+          <td>
+            <img width="900" alt="Screen Shot 2021-09-29 at 2 44 47 AM" src="https://user-images.githubusercontent.com/26592306/135139019-36cdbcdf-f6a8-44fc-aeff-2edaed829851.png">
+          </td>
+        </tr>
+        <tr>
+          <td>목표 문장 입력</td>
+        </tr>
+        <tr>
+          <td>
+            <img width="900" alt="Screen Shot 2021-09-29 at 2 45 07 AM" src="https://user-images.githubusercontent.com/26592306/135139028-d17d6af8-a864-440d-ab5e-fbcf5ade02cc.png">
+          </td>
+        </tr>
+        <tr>
+          <td>대표 컨텐츠 추천</td>
+        </tr>
+        <tr>
+          <td>
+            <img width="900" alt="Screen Shot 2021-09-29 at 2 45 46 AM" src="https://user-images.githubusercontent.com/26592306/135139031-5ccd2753-7940-4cb3-afc3-f6503608798d.png">
+          </td>
+        </tr>
+        <tr>
+          <td>컨텐츠 추천</td>
+        </tr>
+        <tr>
+          <td>
+            <img width="900" alt="Screen Shot 2021-09-29 at 2 46 14 AM" src="https://user-images.githubusercontent.com/26592306/135139036-e4811f9a-7d5a-4c76-9192-ade39d007c47.png">
+          </td>
+        </tr>
+      </tbody>
+    </table>
+</details>
+<details>
+    <summary><b> 선호도 관리 </b></summary>
+    <table style="text-align:center;">
+    <tbody>
+      <tr>
+        <td>컨텐츠 선호도 정보</td>
+      </tr>
+      <tr>
+        <td>
+          <img width="900" alt="Screen Shot 2021-09-29 at 2 47 10 AM" src="https://user-images.githubusercontent.com/26592306/135139041-bb5a01d0-2f3e-4a09-88b8-b4914b981983.png">
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</details>
+
+## 🌐 전체 서비스 구성도
+<img width="793" alt="Screen Shot 2021-09-29 at 2 32 51 AM" src="https://user-images.githubusercontent.com/26592306/135137018-1652a900-5636-411a-be13-baa35c24f781.png">
+
+## 📄 Lambda
 _각각의 fuction은 AWS Lambda에 업로드_
 
 #### addSentenceData
